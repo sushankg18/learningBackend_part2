@@ -51,7 +51,9 @@ const userSchema = mongoose.Schema(
 // we are using pre hooks to hash the password before saving it to the database
 userSchema.pre("save", async function (next) {
     if (this.isModified("password")) { // this.isModified is used to check if the password is modified or not
-        this.password = bcrypt.hash(this.password, 10) //if the password is modified then we are hashing it using bcrypt
+
+ //here we have to use await other wise password will show exactly same in db  as user entered while creation.
+        this.password = await bcrypt.hash(this.password, 10) //if the password is modified then we are hashing it using bcrypt
         next();
     } else {
         return next(); //if the password is not modified then we are returning the next function
@@ -86,4 +88,5 @@ userSchema.methods.generateRefreshToken = function () {
         }
     )
 }
-export const User = mongoose.model("User", userSchema)
+export const User = mongoose.model("User", userSchema) 
+// In mongodb database we are creating a collection named User and we are using the userSchema to define the structure of the collection
