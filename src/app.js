@@ -18,4 +18,16 @@ app.use(express.urlencoded({limit : "16kb", extended : true}))
 app.use(express.static("public")) 
 app.use(cookieParser()) // easy way to use cookieParser.
 
+
+
+//router Imports
+import userRouter from './routes/user.routes.js'
+
+
+//router usage
+app.use("/api/v1/users", userRouter)
+//this url works as http://localhost:3000/api/v1/users
+
+
+
 export { app } // this is the best way to use export app.
