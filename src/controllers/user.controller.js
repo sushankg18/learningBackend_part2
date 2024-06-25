@@ -7,19 +7,33 @@ import {ApiResponse} from '../utils/ApiResponse.js'
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
+        console.log("Fetching user by ID:", userId);
         const user = await User.findById(userId);
+        console.log("User found:", user);
+
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+
+        console.log("Generating access token...");
         const accessToken = user.generateAccessToken();
+        console.log("Access token generated:", accessToken);
+
+        console.log("Generating refresh token...");
         const refreshToken = user.generateRefreshToken();
+        console.log("Refresh token generated:", refreshToken);
 
         user.refreshToken = refreshToken;
-        await user.save({validateBeforeSave : false})
+        await user.save({ validateBeforeSave: false });
 
-        return {accessToken, refreshToken}
+        return { accessToken, refreshToken };
 
     } catch (error) {
-        throw new ApiError(500, "Something went wrong while generating access and refresh token")
+        console.error("Error in generateAccessAndRefreshToken:", error);
+        throw new ApiError(500, "Something went wrong while generating access and refresh token");
     }
 }
+
 
 const resgisterUser = asyncHandler( async (req, res)=>{
     // register user
@@ -36,10 +50,10 @@ const resgisterUser = asyncHandler( async (req, res)=>{
     //return res 
 
     const {fullname, email, password, userName,}= req.body
-    // // console.log("Full name : ",fullname)
-    // console.log("email : ",email)
-    // console.log("password: ",password)
-    // console.log("username : ",userName)
+    console.log("Full name : ",fullname)
+    console.log("email : ",email)
+    console.log("password: ",password)
+    console.log("username : ",userName)
 
 
     //here we check if all fields are filled or not
@@ -122,7 +136,7 @@ const logInUser = asyncHandler(async(req, res)=>{
 
     const {userName, email, password} = req.body
 
-    if(!userName || !email){
+    if(!userName && !email){
         throw new ApiError(400, "username or email is required")
     }
 
@@ -159,7 +173,28 @@ const logInUser = asyncHandler(async(req, res)=>{
 })
 
 const logoutUser = asyncHandler(async(req, res)=> {
+    User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set : {
+                refreshToken : undefined
+            }
+        },
+        {
+            new : true
+        }
+    )
 
+    const options = {
+        httpOnly : true,
+        secure : true
+    }
+
+    return res
+    .status(200)
+    .clearCookie("accessToken" , options)
+    .clearCookie("refreshToken" , options)
+    .json(new ApiResponse(200, {} , "User logged out successfully"))
 })
 
-export {resgisterUser , logInUser}
+export {resgisterUser , logInUser , logoutUser}
